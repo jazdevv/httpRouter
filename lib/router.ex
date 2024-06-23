@@ -20,32 +20,49 @@ defmodule Router do
     Router.Bucket.set(Process.get(:router), routes_config)
 
     # Log data
-    IO.puts("new config map build")
-    IO.inspect(routes_config)
+    # IO.inspect(routes_config)
+
+    IO.puts("Added route: #{path}")
+  end
+
+  def get_route_callback(path) do
+    route_keys = String.split(path, "/")
+
+    routes_config = Router.Bucket.get(Process.get(:router))
+    data = read_routes_config(route_keys, routes_config, %{:callback => nil})
+    IO.inspect(data)
+  end
+
+  defp read_routes_config([key, keys], acc, data) do
+    case Map.get(acc, key) do
+      nil ->
+        case Map.get(acc, :dynamic) do
+          nil ->
+            data
+
+          value ->
+            data
+        end
+
+      value ->
+        data
+    end
   end
 
   defp build_routes_config([], acc, callback_function) do
-    acc
+    Map.put(acc, :default, callback_function)
   end
 
   defp build_routes_config([key | keys], acc, callback_function) do
-    # if its not the last key
-    if length(keys) > 0 do
-      IO.puts("analyzing key: #{key}")
-      # IO.puts("actual acc #{inspect(acc)}")
-      case Map.get(acc, key) do
-        nil ->
-          Map.put(acc, format_key(key), build_routes_config(keys, %{}, callback_function))
+    case Map.get(acc, key) do
+      nil ->
+        Map.put(acc, format_key(key), build_routes_config(keys, %{}, callback_function))
 
-        existing_map when is_map(existing_map) ->
-          Map.put(acc, format_key(key), build_routes_config(keys, existing_map, callback_function))
+      existing_map when is_map(existing_map) ->
+        Map.put(acc, format_key(key), build_routes_config(keys, existing_map, callback_function))
 
-        _ ->
-          acc
-      end
-    else
-      # When there are no more keys to process so its the last key, return the accumulator with the callback function.
-      Map.put(acc, format_key(key), callback_function)
+      _ ->
+        acc
     end
   end
 
@@ -53,7 +70,7 @@ defmodule Router do
     trimmed_key = String.trim(key)
 
     if String.starts_with?(trimmed_key, "{") && String.ends_with?(trimmed_key, "}") do
-      "dynamic"
+      :dynamic
     else
       trimmed_key
     end
