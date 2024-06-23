@@ -64,12 +64,13 @@ defmodule Router do
             data
         end
 
-      _ ->
-        read_routes_config(
-          keys,
-          acc,
-          Map.put(data, :dynamic, [key] ++ Map.get(data, :dynamic))
-        )
+      map ->
+        case Map.get(acc, :default) do
+          value when is_function(value) ->
+            Map.put(data, :callback, value)
+          _ ->
+            Map.put(data, :dynamic, [key] ++ Map.get(data, :dynamic))
+        end
     end
   end
 
