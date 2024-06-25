@@ -32,6 +32,7 @@ defmodule Router do
     data = read_routes_config(route_keys, routes_config, %{:callback => nil, :dynamic => []})
 
     IO.inspect("result of the path #{path}: #{inspect(data)}")
+    data
   end
 
   defp read_routes_config([], acc, data) do
