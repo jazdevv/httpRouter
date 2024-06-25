@@ -19,23 +19,23 @@ defmodule Router do
     # Update the config map at Router Bucket
     Router.Bucket.set(Process.get(:router), routes_config)
 
-    # Log data
-    # IO.inspect(routes_config)
-
     IO.puts("Added route: #{path}")
+  end
+
+  def add_route(_, _) do
+    raise ArgumentError, message: "Input must be a string"
   end
 
   def get_route_callback(path) do
     route_keys = String.split(path, "/")
 
     routes_config = Router.Bucket.get(Process.get(:router))
-    IO.inspect(route_keys)
     data = read_routes_config(route_keys, routes_config, %{:callback => nil, :dynamic => []})
-    IO.inspect(data)
+
+    IO.inspect("result of the path #{path}: #{inspect(data)}")
   end
 
   defp read_routes_config([], acc, data) do
-    IO.puts("end tail")
     read_config_nokey(nil, [] , acc, data)
   end
 
@@ -43,20 +43,15 @@ defmodule Router do
   defp read_routes_config([key | keys], acc, data) do
     case Map.get(acc, key) do
       nil ->
-        IO.puts("value not found #{key}")
         read_config_nokey(key, keys , acc, data)
       map ->
-        IO.puts("value found !")
         read_routes_config(keys, map, data)
     end
   end
 
-  defp read_config_nokey(key, keys, acc, data) do
-    IO.puts("config no key #{inspect(Map.get(acc, :dynamic))}")
+  defp read_config_nokey(key, _, acc, data) do
     case Map.get(acc, :dynamic) do
       nil ->
-        IO.puts("dynamic nil")
-        IO.inspect(acc)
         case Map.get(acc, :default) do
           value when is_function(value) ->
             Map.put(data, :callback, value)
@@ -64,12 +59,14 @@ defmodule Router do
             data
         end
 
-      map ->
+      _ ->
+        map_with_dynamic = Map.put(data, :dynamic, [key] ++ Map.get(data, :dynamic))
+
         case Map.get(acc, :default) do
           value when is_function(value) ->
-            Map.put(data, :callback, value)
+            Map.put(map_with_dynamic, :callback, value)
           _ ->
-            Map.put(data, :dynamic, [key] ++ Map.get(data, :dynamic))
+            Map.put(map_with_dynamic, :dynamic, [key] ++ Map.get(data, :dynamic))
         end
     end
   end
@@ -101,7 +98,4 @@ defmodule Router do
     end
   end
 
-  def add_route(path, callback_function) do
-    raise ArgumentError, message: "Input must be a string"
-  end
 end
