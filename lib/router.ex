@@ -19,10 +19,9 @@ defmodule Router do
 
       # Update the config map at Router Bucket
       Router.Bucket.set(Process.get(:router), routes_config)
-
-      IO.puts("Added route: #{path}")
+      IO.ANSI.format([:green, "Added route: #{path}"]) |> IO.puts()
     else
-      IO.puts("Invalid route path #{path}")
+      IO.ANSI.format([:red, "Invalid route path #{path}"]) |> IO.puts()
     end
   end
 
